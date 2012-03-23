@@ -1,0 +1,16 @@
+Usage
+=====
+
+usage: zippackage.py [-h] [-m MAIN] [-o OUTPUT] [-c [CLEAN]]
+                     [target [target ...]]
+
+compile python files and zip packaging
+
+positional arguments:
+  target
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -m MAIN, --main MAIN
+  -o OUTPUT, --output OUTPUT
+  -c [CLEAN], --clean [CLEAN]
