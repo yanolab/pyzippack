@@ -5,18 +5,33 @@ import zipfile
 import glob
 import os
 
-def clean(target):
-    if not os.path.exists(target):
-        return None
+def _compile_and_write2zip(zio, filename):
+    name, ext = os.path.splitext(filename)
 
-    if os.path.isfile(target):
-        os.remove(target)
-    elif os.path.isdir(target):
-        for root, dirs, files in os.walk(target):
-            for file in files:
-                name, ext = os.path.splitext(file)
-                if ext in ['.pyc', '.pyo']:
-                    os.remove(os.path.join(root, file))
+    if ext == '.py':
+        _compile(filename, '__main__.pyc', zio.debug)
+        zio.write('__main__.pyc')
+        if zio.debug > 0: print 'Adding', '__main__.pyc'
+    elif ext in ['.pyc', '.pyo']:
+        zio.write(filename, '__main__' + ext)
+
+def _compile(pyfile, pycfile, debug=0):
+    import py_compile
+    if debug > 0: print 'Compiling', pyfile
+    py_compile.compile(pyfile, pycfile, None, True)
+
+def _write_main(zio, mainfile):
+    import functools
+
+    ftable = {
+        "__main__.py": f.writepy,
+        "__main__.pyc": f.write,
+        "__main__.pyo": f.write,
+        }
+
+    deffunc = functools.partial(_compile_and_write2zip, zio)
+    func = ftable.get(mainfile, deffunc)
+    func(mainfile)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="compile python files and zip packaging")
@@ -33,12 +48,9 @@ if __name__ == '__main__':
             f.writepy(_target)
 
         if not args.main == None:
-            f.writepy(args.main)
+            _write_main(f, args.main)
 
     if args.clean:
-        for _target in args.target:
-            clean(_target)
-
-        if not args.main == None:
-            for ext in ['c', 'o']:
-                clean(args.main + ext)
+        import glob
+        for tmpfile in glob.glob("*.py[c|o]"):
+            os.remove(tmpfile)
